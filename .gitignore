@@ -1,0 +1,10 @@
+# Dépendances / build
+node_modules/
+vendor/
+*.zip
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
