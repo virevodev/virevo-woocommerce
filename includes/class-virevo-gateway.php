@@ -118,8 +118,13 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 		}
 
 		// Mémorise l'identifiant Virevo pour la réconciliation au webhook.
+		// On LAISSE la commande en « attente de paiement » (pending) : le stock
+		// n'est décrémenté qu'à la confirmation du virement, par payment_complete()
+		// (cœur WooCommerce, idempotent). Les commandes abandonnées sont
+		// auto-annulées par WooCommerce (réglage « Conserver le stock (minutes) »),
+		// ce qui libère le stock. On ajoute seulement une note (pas de transition).
 		$order->update_meta_data( '_virevo_payment_id', sanitize_text_field( $resp['id'] ) );
-		$order->update_status( 'on-hold', __( 'En attente du virement instantané (Virevo).', 'virevo-for-woocommerce' ) );
+		$order->add_order_note( __( 'Paiement Virevo initié — en attente de confirmation du virement (le stock sera décrémenté à la confirmation).', 'virevo-for-woocommerce' ) );
 		$order->save();
 
 		WC()->cart->empty_cart();
