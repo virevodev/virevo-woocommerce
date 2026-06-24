@@ -4,7 +4,7 @@ Tags: woocommerce, payment, virement, instant payment, sepa
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.1.0
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,9 @@ webhook et valider votre intégration de bout en bout.
 L'euro (EUR) pour le moment.
 
 == Changelog ==
+
+= 0.2.0 =
+* Redirection du client après paiement (return_url) et annulation (cancel_url).
 
 = 0.1.0 =
 * Version initiale : passerelle de paiement, checkout classique + blocs,

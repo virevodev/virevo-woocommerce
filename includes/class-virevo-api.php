@@ -28,9 +28,23 @@ class Virevo_API {
 	 * @param string $currency        Devise (EUR).
 	 * @param string $reference       Référence marchand (ID de commande).
 	 * @param string $idempotency_key Clé d'idempotence (évite les doublons).
+	 * @param string $return_url      Redirection après paiement réussi.
+	 * @param string $cancel_url      Redirection si annulation.
 	 * @return array|WP_Error
 	 */
-	public function create_payment( $amount_cents, $currency, $reference, $idempotency_key ) {
+	public function create_payment( $amount_cents, $currency, $reference, $idempotency_key, $return_url = '', $cancel_url = '' ) {
+		$body = array(
+			'amount_cents' => (int) $amount_cents,
+			'currency'     => $currency,
+			'reference'    => $reference,
+		);
+		if ( $return_url ) {
+			$body['return_url'] = $return_url;
+		}
+		if ( $cancel_url ) {
+			$body['cancel_url'] = $cancel_url;
+		}
+
 		$response = wp_remote_post(
 			$this->base_url . '/v1/payments',
 			array(
@@ -40,13 +54,7 @@ class Virevo_API {
 					'Content-Type'    => 'application/json',
 					'Idempotency-Key' => $idempotency_key,
 				),
-				'body'    => wp_json_encode(
-					array(
-						'amount_cents' => (int) $amount_cents,
-						'currency'     => $currency,
-						'reference'    => $reference,
-					)
-				),
+				'body'    => wp_json_encode( $body ),
 			)
 		);
 

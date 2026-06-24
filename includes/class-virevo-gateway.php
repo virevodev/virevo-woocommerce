@@ -101,7 +101,9 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 			$amount_cents,
 			'EUR',
 			(string) $order->get_id(),
-			'wc-' . $order_id // idempotence par commande.
+			'wc-' . $order_id, // idempotence par commande.
+			$this->get_return_url( $order ), // page « commande reçue » après paiement.
+			wc_get_checkout_url() // retour au checkout en cas d'annulation.
 		);
 
 		if ( is_wp_error( $resp ) ) {
