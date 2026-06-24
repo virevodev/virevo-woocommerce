@@ -4,7 +4,7 @@ Tags: woocommerce, payment, virement, instant payment, sepa
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,6 +45,9 @@ webhook et valider votre intégration de bout en bout.
 L'euro (EUR) pour le moment.
 
 == Changelog ==
+
+= 0.5.0 =
+* Remboursements depuis l'admin WooCommerce (total/partiel) → API Virevo. Messages d'erreur API plus clairs.
 
 = 0.4.0 =
 * Stock décrémenté à la confirmation du paiement (commande en attente jusqu'au virement) ; meilleure gestion des abandons.

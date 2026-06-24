@@ -66,12 +66,61 @@ class Virevo_API {
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( $code < 200 || $code >= 300 ) {
-			$message = is_array( $body ) && ! empty( $body['message'] )
-				? $body['message']
-				: sprintf( 'Erreur API Virevo (HTTP %d).', $code );
-			return new WP_Error( 'virevo_api_error', $message );
+			return new WP_Error( 'virevo_api_error', self::error_message( $code, $body ) );
 		}
 
 		return is_array( $body ) ? $body : new WP_Error( 'virevo_api_error', 'Réponse Virevo illisible.' );
+	}
+
+	/**
+	 * Rembourse un paiement (total si $amount_cents <= 0, sinon partiel).
+	 *
+	 * @param string $payment_id   Identifiant du paiement Virevo.
+	 * @param int    $amount_cents Montant en centimes (0 = total restant).
+	 * @param string $reason       Motif (optionnel).
+	 * @return array|WP_Error
+	 */
+	public function refund( $payment_id, $amount_cents = 0, $reason = '' ) {
+		$body = array();
+		if ( (int) $amount_cents > 0 ) {
+			$body['amount_cents'] = (int) $amount_cents;
+		}
+		if ( '' !== $reason ) {
+			$body['reason'] = $reason;
+		}
+
+		$response = wp_remote_post(
+			$this->base_url . '/v1/payments/' . rawurlencode( $payment_id ) . '/refund',
+			array(
+				'timeout' => 20,
+				'headers' => array(
+					'Authorization' => 'Bearer ' . $this->api_key,
+					'Content-Type'  => 'application/json',
+				),
+				'body'    => wp_json_encode( (object) $body ),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		$code = (int) wp_remote_retrieve_response_code( $response );
+		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( $code < 200 || $code >= 300 ) {
+			return new WP_Error( 'virevo_refund_error', self::error_message( $code, $decoded ) );
+		}
+		return is_array( $decoded ) ? $decoded : new WP_Error( 'virevo_refund_error', 'Réponse Virevo illisible.' );
+	}
+
+	/** Extrait le message d'erreur de l'API ({"error":{"message":…}}). */
+	private static function error_message( $code, $body ) {
+		if ( is_array( $body ) && isset( $body['error']['message'] ) ) {
+			return $body['error']['message'];
+		}
+		if ( is_array( $body ) && ! empty( $body['message'] ) ) {
+			return $body['message'];
+		}
+		return sprintf( 'Erreur API Virevo (HTTP %d).', $code );
 	}
 }

@@ -16,7 +16,7 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 		$this->method_title       = __( 'Virevo — virement instantané', 'virevo-for-woocommerce' );
 		$this->method_description = __( 'Encaissez par virement instantané, sans frais de carte. Le client est redirigé vers une page de paiement ; la commande est validée à réception du virement (webhook signé).', 'virevo-for-woocommerce' );
 		$this->has_fields         = false;
-		$this->supports           = array( 'products' );
+		$this->supports           = array( 'products', 'refunds' );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -133,5 +133,39 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 			'result'   => 'success',
 			'redirect' => esc_url_raw( $resp['payment_url'] ),
 		);
+	}
+
+	/**
+	 * Remboursement (total ou partiel) déclenché depuis l'admin WooCommerce.
+	 * Renvoie true en cas de succès, WP_Error sinon (WooCommerce affiche le message).
+	 *
+	 * @param int        $order_id Identifiant de commande.
+	 * @param float|null $amount   Montant à rembourser (null = total).
+	 * @param string     $reason   Motif.
+	 * @return bool|WP_Error
+	 */
+	public function process_refund( $order_id, $amount = null, $reason = '' ) {
+		$order      = wc_get_order( $order_id );
+		$payment_id = $order ? $order->get_meta( '_virevo_payment_id' ) : '';
+		if ( ! $payment_id ) {
+			return new WP_Error( 'virevo_refund', __( 'Identifiant de paiement Virevo introuvable sur cette commande.', 'virevo-for-woocommerce' ) );
+		}
+
+		$api          = new Virevo_API( $this->get_api_key(), $this->get_option( 'api_base' ) ?: 'https://app.virevo.fr' );
+		$amount_cents = ( null !== $amount ) ? (int) round( (float) $amount * 100 ) : 0;
+
+		$resp = $api->refund( $payment_id, $amount_cents, $reason );
+		if ( is_wp_error( $resp ) ) {
+			return $resp; // WooCommerce affiche le message (ex. « indisponible en production »).
+		}
+
+		$order->add_order_note(
+			sprintf(
+				/* translators: %s: montant remboursé. */
+				__( 'Remboursement Virevo effectué : %s.', 'virevo-for-woocommerce' ),
+				wc_price( null !== $amount ? $amount : $order->get_total() )
+			)
+		);
+		return true;
 	}
 }
