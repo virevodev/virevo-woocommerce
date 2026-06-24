@@ -54,6 +54,12 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 				),
 				'default' => 'test',
 			),
+			'api_base'       => array(
+				'title'       => __( "URL de l'API (avancé)", 'virevo-for-woocommerce' ),
+				'type'        => 'text',
+				'description' => __( "Laisser vide en production (https://app.virevo.fr). Pour un test local : http://localhost:3000", 'virevo-for-woocommerce' ),
+				'default'     => '',
+			),
 			'test_api_key'   => array(
 				'title' => __( 'Clé API test', 'virevo-for-woocommerce' ),
 				'type'  => 'password',
@@ -94,7 +100,7 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 			return array( 'result' => 'failure' );
 		}
 
-		$api          = new Virevo_API( $this->get_api_key() );
+		$api          = new Virevo_API( $this->get_api_key(), $this->get_option( 'api_base' ) ?: 'https://app.virevo.fr' );
 		$amount_cents = (int) round( (float) $order->get_total() * 100 );
 
 		$resp = $api->create_payment(
