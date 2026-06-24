@@ -1,0 +1,10 @@
+# Exclut les fichiers de dev du ZIP de distribution (git archive).
+/bin            export-ignore
+/.github        export-ignore
+/.gitignore     export-ignore
+/.gitattributes export-ignore
+/dist           export-ignore
+/README.md      export-ignore
+
+# Normalise les fins de ligne (évite les soucis CRLF côté Windows).
+* text=auto eol=lf

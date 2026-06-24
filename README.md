@@ -38,5 +38,31 @@ signé**.
 - Retour automatique du client après paiement (`return_url`) : à ajouter quand
   l'API l'exposera ; aujourd'hui la commande est validée par le webhook.
 
+## Distribution & mises à jour (pilotes)
+
+Tant que le plugin n'est pas sur WordPress.org / la marketplace Woo, on
+auto-distribue un ZIP.
+
+### Construire le ZIP installable
+```bash
+bash bin/build-zip.sh
+# → dist/virevo-for-woocommerce-<version>.zip  (dossier racine propre)
+```
+Le marchand l'installe via **wp-admin → Extensions → Ajouter → Téléverser**.
+
+### Publier une release (automatisé)
+Pousser un tag `vX.Y.Z` déclenche le workflow `.github/workflows/release.yml` qui
+construit le ZIP et le **joint à une release GitHub** :
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+### Mises à jour automatiques
+Le plugin interroge la **dernière release GitHub** et propose la mise à jour
+dans l'admin si une version plus récente existe (ZIP de la release comme paquet).
+⚠️ Pour des pilotes externes, la release (ou le dépôt) doit être **publique** —
+sinon l'API GitHub renvoie 404 et l'updater ne fait rien (dégradation propre).
+Alternative privée : héberger le ZIP + un manifeste sur un domaine maîtrisé.
+
 ## Licence
 GPLv2 or later.

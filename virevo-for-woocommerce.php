@@ -84,6 +84,18 @@ add_action(
 );
 
 /**
+ * Mises à jour automatiques depuis les releases GitHub (auto-distribution, pilotes).
+ * Nécessite une release publiée (et un dépôt/release public pour les pilotes).
+ */
+add_action(
+	'admin_init',
+	function () {
+		require_once VIREVO_WC_PATH . 'includes/class-virevo-updater.php';
+		new Virevo_Updater( VIREVO_WC_FILE, 'virevodev/virevo-woocommerce', VIREVO_WC_VERSION );
+	}
+);
+
+/**
  * Lien « Réglages » sur la liste des extensions.
  */
 add_filter(

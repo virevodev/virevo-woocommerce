@@ -1,0 +1,26 @@
+name: Release
+
+# Sur un tag vX.Y.Z : construit le ZIP propre et le joint à une release GitHub.
+# La release sert de canal d'auto-distribution + d'auto-update (cf. updater).
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Construire le ZIP
+        run: bash bin/build-zip.sh
+
+      - name: Créer la release + joindre le ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true
