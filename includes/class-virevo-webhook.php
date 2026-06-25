@@ -61,21 +61,42 @@ class Virevo_Webhook {
 	}
 
 	/**
-	 * Valide la signature « t=<unix>,v1=<hmac> » (HMAC-SHA256 de "<t>.<corps>").
+	 * Valide la signature « t=<unix>,v1=<hmac>[,v1=<hmac>] » (HMAC-SHA256 de
+	 * "<t>.<corps>"). L'en-tête peut porter PLUSIEURS v1 pendant une rotation de
+	 * secret (ancien + nouveau) : on accepte si l'un d'eux correspond.
 	 */
 	private static function verify_signature( $secret, $header, $body ) {
 		if ( empty( $secret ) || empty( $header ) ) {
 			return false;
 		}
-		parse_str( str_replace( ',', '&', $header ), $parts );
-		if ( empty( $parts['t'] ) || empty( $parts['v1'] ) ) {
+		$t    = null;
+		$sigs = array();
+		foreach ( explode( ',', $header ) as $part ) {
+			$kv = explode( '=', $part, 2 );
+			if ( count( $kv ) !== 2 ) {
+				continue;
+			}
+			$k = trim( $kv[0] );
+			$v = trim( $kv[1] );
+			if ( 't' === $k ) {
+				$t = (int) $v;
+			} elseif ( 'v1' === $k && '' !== $v ) {
+				$sigs[] = $v;
+			}
+		}
+		if ( null === $t || empty( $sigs ) ) {
 			return false;
 		}
-		if ( abs( time() - (int) $parts['t'] ) > self::TOLERANCE_SECONDS ) {
+		if ( abs( time() - $t ) > self::TOLERANCE_SECONDS ) {
 			return false; // anti-rejeu.
 		}
-		$expected = hash_hmac( 'sha256', $parts['t'] . '.' . $body, $secret );
-		return hash_equals( $expected, (string) $parts['v1'] );
+		$expected = hash_hmac( 'sha256', $t . '.' . $body, $secret );
+		foreach ( $sigs as $v1 ) {
+			if ( hash_equals( $expected, $v1 ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
