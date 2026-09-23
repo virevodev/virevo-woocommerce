@@ -1,10 +1,10 @@
 === Virevo for WooCommerce ===
 Contributors: virevo
-Tags: woocommerce, payment, virement, instant payment, sepa
+Tags: woocommerce, payment gateway, instant payment, sepa, open banking
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,6 +25,37 @@ réception du virement, via un webhook signé (HMAC-SHA256).
 Vous gardez la maîtrise des fonds : Virevo n'est jamais dépositaire, le virement
 arrive directement sur votre IBAN.
 
+= Service tiers requis =
+
+Cette extension est une interface vers **Virevo**, un service d'encaissement par
+virement instantané exploité par Virevo SAS (France). **Elle ne fonctionne pas
+seule** : un compte Virevo et une clé d'API sont nécessaires.
+
+**Ce qui est transmis à Virevo, et quand.** À chaque commande réglée par ce
+moyen de paiement, l'extension appelle l'API Virevo (`https://app.virevo.fr`)
+pour créer la demande de paiement. Sont envoyés :
+
+* le **montant** et la devise de la commande ;
+* le **numéro de commande**, comme référence de rapprochement ;
+* les deux **adresses de retour** de votre boutique (page « commande reçue » et
+  page de paiement), pour ramener le client après son règlement.
+
+**Aucune donnée personnelle de votre client n'est transmise** par l'extension :
+ni nom, ni adresse e-mail, ni adresse postale, ni coordonnées bancaires. Le
+client s'authentifie directement auprès de sa banque, sur la page de paiement.
+
+En sens inverse, Virevo appelle l'URL de webhook de votre boutique pour signaler
+l'issue du paiement. Chaque appel est signé (HMAC-SHA256) et vérifié avant
+d'être pris en compte.
+
+Un remboursement déclenché depuis l'administration WooCommerce transmet à Virevo
+l'identifiant du paiement, le montant et, le cas échéant, le motif que vous
+saisissez.
+
+* Site du service : https://virevo.fr
+* Conditions générales d'utilisation : https://virevo.fr/cgu
+* Politique de confidentialité : https://virevo.fr/confidentialite
+
 == Installation ==
 
 1. Installez et activez l'extension.
@@ -36,15 +67,33 @@ arrive directement sur votre IBAN.
 
 == Frequently Asked Questions ==
 
+= Faut-il un compte Virevo ? =
+Oui. L'extension est une interface vers le service Virevo : sans compte ni clé
+d'API, elle n'a rien à appeler. La création du compte est gratuite.
+
+= Quelles données de mes clients sont envoyées à Virevo ? =
+Aucune. L'extension ne transmet que le montant, la devise, le numéro de commande
+et les adresses de retour de votre boutique. Votre client s'authentifie
+directement auprès de sa banque.
+
 = Comment tester sans compte vérifié ? =
 Choisissez le mode « Test » et utilisez une clé `vrv_test_…`. Les paiements sont
 fictifs ; vous pouvez simuler un encaissement depuis l'API pour déclencher le
 webhook et valider votre intégration de bout en bout.
 
 = Quelles devises sont supportées ? =
-L'euro (EUR) pour le moment.
+L'euro (EUR) pour le moment. Le virement instantané est un instrument de la zone
+euro : un client situé hors de cette zone ne peut pas régler ainsi.
+
+= Que se passe-t-il si mon client abandonne le paiement ? =
+La commande reste en attente de paiement. Cette version ne traite que la
+confirmation d'encaissement : l'échec, l'annulation et le remboursement initiés
+côté Virevo ne mettent pas encore la commande à jour automatiquement.
 
 == Changelog ==
+
+= 0.5.1 =
+* Vérification de signature : accepte plusieurs `v1=` pendant une rotation du secret de webhook.
 
 = 0.5.0 =
 * Remboursements depuis l'admin WooCommerce (total/partiel) → API Virevo. Messages d'erreur API plus clairs.

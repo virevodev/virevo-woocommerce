@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Virevo for WooCommerce
- * Plugin URI: https://virevo.fr/developpeurs.html
+ * Plugin URI: https://virevo.fr/developpeurs
  * Description: Encaissez par virement instantané (Virevo) dans WooCommerce — sans frais de carte. Lien de paiement + confirmation par webhook signé.
  * Version: 0.5.1
  * Author: Virevo
@@ -85,12 +85,25 @@ add_action(
 
 /**
  * Mises à jour automatiques depuis les releases GitHub (auto-distribution, pilotes).
- * Nécessite une release publiée (et un dépôt/release public pour les pilotes).
+ *
+ * ⚠️ INTERDIT sur WordPress.org. La directive 8 du dépôt officiel proscrit
+ * « servir des mises à jour, ou installer des extensions, des thèmes ou des
+ * modules depuis des serveurs autres que ceux de WordPress.org ». Une extension
+ * publiée là-bas se met à jour par WordPress.org, point.
+ *
+ * Le fichier est donc RETIRÉ du paquet destiné au dépôt officiel
+ * (`bash bin/build-zip.sh --wporg`), et l'auto-distribution le garde. D'où le
+ * test d'existence : le code ne s'active que si le fichier est présent, sans
+ * erreur fatale dans le cas contraire.
  */
 add_action(
 	'admin_init',
 	function () {
-		require_once VIREVO_WC_PATH . 'includes/class-virevo-updater.php';
+		$updater = VIREVO_WC_PATH . 'includes/class-virevo-updater.php';
+		if ( ! file_exists( $updater ) ) {
+			return; // Paquet WordPress.org : les mises à jour viennent du dépôt officiel.
+		}
+		require_once $updater;
 		new Virevo_Updater( VIREVO_WC_FILE, 'virevodev/virevo-woocommerce', VIREVO_WC_VERSION );
 	}
 );
