@@ -19,8 +19,26 @@ final class Virevo_Blocks extends AbstractPaymentMethodType {
 		$this->settings = get_option( 'woocommerce_virevo_settings', array() );
 	}
 
+	/**
+	 * Délègue à la passerelle classique.
+	 *
+	 * Se contenter de `enabled` laissait le checkout par BLOCS proposer Virevo
+	 * alors que la passerelle classique, elle, le masquait faute de clé ou hors
+	 * zone euro. Or les blocs sont le checkout par défaut des boutiques
+	 * récentes : c'est le chemin le PLUS emprunté qui était le moins gardé.
+	 *
+	 * `WC_Gateway_Virevo::is_available()` reste donc la seule règle, et les deux
+	 * tunnels ne peuvent plus diverger.
+	 */
 	public function is_active() {
-		return ! empty( $this->settings['enabled'] ) && 'yes' === $this->settings['enabled'];
+		if ( ! function_exists( 'WC' ) || ! WC()->payment_gateways() ) {
+			return false;
+		}
+		$gateways = WC()->payment_gateways()->payment_gateways();
+		if ( empty( $gateways['virevo'] ) ) {
+			return false;
+		}
+		return $gateways['virevo']->is_available();
 	}
 
 	public function get_payment_method_script_handles() {

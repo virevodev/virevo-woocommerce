@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, instant payment, sepa, open banking
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.5.1
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -85,12 +85,23 @@ webhook et valider votre intégration de bout en bout.
 L'euro (EUR) pour le moment. Le virement instantané est un instrument de la zone
 euro : un client situé hors de cette zone ne peut pas régler ainsi.
 
+= Pourquoi « Virement instantané » n'apparaît-il pas au checkout ? =
+Parce qu'il ne pourrait pas aboutir. L'extension masque le moyen de paiement
+tant que la clé du mode actif est absente ou que son préfixe contredit le mode,
+et sur une boutique qui n'est pas en euros. Un bandeau dans l'administration
+indique lequel de ces cas s'applique.
+
 = Que se passe-t-il si mon client abandonne le paiement ? =
 La commande reste en attente de paiement. Cette version ne traite que la
 confirmation d'encaissement : l'échec, l'annulation et le remboursement initiés
 côté Virevo ne mettent pas encore la commande à jour automatiquement.
 
 == Changelog ==
+
+= 0.6.0 =
+* Le moyen de paiement est masqué au checkout, classique et blocs, tant que la clé du mode actif manque, que son préfixe contredit le mode, ou que la boutique n'est pas en euros.
+* Une clé dont le préfixe contredit son champ est refusée à l'enregistrement.
+* Bandeau d'administration permanent : clé manquante, secret de webhook manquant, ou mode test actif.
 
 = 0.5.1 =
 * Vérification de signature : accepte plusieurs `v1=` pendant une rotation du secret de webhook.

@@ -3,7 +3,7 @@
  * Plugin Name: Virevo for WooCommerce
  * Plugin URI: https://virevo.fr/developpeurs
  * Description: Encaissez par virement instantané (Virevo) dans WooCommerce — sans frais de carte. Lien de paiement + confirmation par webhook signé.
- * Version: 0.5.1
+ * Version: 0.6.0
  * Author: Virevo
  * Author URI: https://virevo.fr
  * License: GPLv2 or later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Accès direct interdit.
 }
 
-define( 'VIREVO_WC_VERSION', '0.5.1' );
+define( 'VIREVO_WC_VERSION', '0.6.0' );
 define( 'VIREVO_WC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VIREVO_WC_FILE', __FILE__ );
 
@@ -61,6 +61,68 @@ add_action(
 		);
 
 		Virevo_Webhook::init();
+	}
+);
+
+/**
+ * Bandeau d'administration : dire l'état, en permanence.
+ *
+ * Le danger n'est pas le mode test, c'est un mode test qu'on a OUBLIÉ. Une
+ * boutique en production réglée sur Test affiche « Virement instantané » au
+ * checkout, les clients commandent, et rien n'arrive jamais, sans le moindre
+ * signal. Même chose pour une passerelle activée sans clé.
+ *
+ * Le bandeau n'est donc PAS masquable : il disparaît quand la situation est
+ * corrigée, pas quand on clique dessus.
+ */
+add_action(
+	'admin_notices',
+	function () {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+
+		$settings = get_option( 'woocommerce_virevo_settings', array() );
+		if ( ! is_array( $settings ) || 'yes' !== ( $settings['enabled'] ?? 'no' ) ) {
+			return; // Passerelle désactivée : rien à signaler.
+		}
+
+		$mode   = 'live' === ( $settings['mode'] ?? 'test' ) ? 'live' : 'test';
+		$key    = trim( (string) ( 'live' === $mode ? ( $settings['live_api_key'] ?? '' ) : ( $settings['test_api_key'] ?? '' ) ) );
+		$secret = trim( (string) ( $settings['webhook_secret'] ?? '' ) );
+		$url    = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=virevo' );
+
+		if ( '' === $key ) {
+			printf(
+				'<div class="notice notice-error"><p><strong>%s</strong> %s <a href="%s">%s</a></p></div>',
+				esc_html__( 'Virevo est activé mais aucune clé d\'API n\'est renseignée.', 'virevo-for-woocommerce' ),
+				esc_html__( 'Le moyen de paiement reste masqué au checkout tant que la clé manque.', 'virevo-for-woocommerce' ),
+				esc_url( $url ),
+				esc_html__( 'Renseigner la clé', 'virevo-for-woocommerce' )
+			);
+			return;
+		}
+
+		if ( '' === $secret ) {
+			printf(
+				'<div class="notice notice-warning"><p><strong>%s</strong> %s <a href="%s">%s</a></p></div>',
+				esc_html__( 'Virevo : aucun secret de webhook.', 'virevo-for-woocommerce' ),
+				esc_html__( 'Vos clients pourront payer, mais les commandes resteront « en attente de paiement » : rien ne viendra confirmer l\'encaissement.', 'virevo-for-woocommerce' ),
+				esc_url( $url ),
+				esc_html__( 'Configurer le webhook', 'virevo-for-woocommerce' )
+			);
+			return;
+		}
+
+		if ( 'test' === $mode ) {
+			printf(
+				'<div class="notice notice-warning"><p><strong>%s</strong> %s <a href="%s">%s</a></p></div>',
+				esc_html__( 'Virevo est en mode test.', 'virevo-for-woocommerce' ),
+				esc_html__( 'Les paiements sont fictifs : aucun argent n\'est réellement encaissé.', 'virevo-for-woocommerce' ),
+				esc_url( $url ),
+				esc_html__( 'Passer en mode live', 'virevo-for-woocommerce' )
+			);
+		}
 	}
 );
 
