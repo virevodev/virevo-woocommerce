@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, instant payment, sepa, open banking
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.6.0
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,11 +92,17 @@ et sur une boutique qui n'est pas en euros. Un bandeau dans l'administration
 indique lequel de ces cas s'applique.
 
 = Que se passe-t-il si mon client abandonne le paiement ? =
-La commande reste en attente de paiement. Cette version ne traite que la
-confirmation d'encaissement : l'échec, l'annulation et le remboursement initiés
-côté Virevo ne mettent pas encore la commande à jour automatiquement.
+La commande est clôturée automatiquement, et le stock réservé est libéré. Un
+paiement refusé passe la commande en « échoué », ce qui laisse le client
+réessayer ; une demande annulée ou expirée la passe en « annulé ».
 
 == Changelog ==
+
+= 0.7.0 =
+* Les quatre événements de webhook sont traités, et non plus seulement le succès. Un paiement échoué, annulé ou expiré clôt la commande au lieu de la laisser en attente indéfiniment, stock réservé.
+* Un remboursement décidé depuis le tableau de bord Virevo crée la ligne de remboursement correspondante dans la boutique.
+* Garde anti-boucle : un remboursement lancé depuis l'administration WooCommerce n'est plus compté deux fois quand Virevo le renotifie.
+* Une commande déjà payée n'est jamais annulée par une notification tardive.
 
 = 0.6.0 =
 * Le moyen de paiement est masqué au checkout, classique et blocs, tant que la clé du mode actif manque, que son préfixe contredit le mode, ou que la boutique n'est pas en euros.

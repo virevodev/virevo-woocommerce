@@ -39,10 +39,12 @@ signé**.
   `cancel_url` sont transmis à `POST /v1/payments`. La validation de la commande
   reste portée par le webhook, le retour navigateur n'étant jamais une preuve
   de paiement.
-- **Limite connue** : seul `payment.succeeded` est traité. `payment.failed`,
-  `payment.canceled` et `payment.refunded` sont acquittés puis ignorés, donc une
-  commande dont le paiement échoue reste « en attente » avec son stock réservé.
-  À corriger.
+- **Les quatre événements sont traités** depuis la 0.7.0 : `succeeded`,
+  `failed`, `canceled`, `expired` et `refunded`. Une commande dont le paiement
+  n'aboutit pas est clôturée au lieu de rester en attente, et un remboursement
+  décidé chez Virevo apparaît dans la boutique. Un remboursement lancé depuis
+  WooCommerce n'est pas compté deux fois : la passerelle mémorise son
+  identifiant, le webhook le reconnaît.
 
 ## Distribution & mises à jour (pilotes)
 
