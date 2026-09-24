@@ -236,6 +236,11 @@ class Virevo_Webhook {
 			return; // Déjà reflété : c'est nous qui l'avons déclenché.
 		}
 
+		// Les deux défauts de `wc_create_refund()` nous conviennent, et il vaut
+		// mieux les nommer que les subir : `refund_payment` est à false, donc
+		// WooCommerce ne rappelle PAS la passerelle (ce serait la boucle), et
+		// `restock_items` est à false, donc le stock n'est pas remis en rayon
+		// sans que le marchand l'ait décidé. On le dit dans la note ci-dessous.
 		$created = wc_create_refund(
 			array(
 				'order_id' => $order->get_id(),
@@ -260,7 +265,7 @@ class Virevo_Webhook {
 		$order->add_order_note(
 			sprintf(
 				/* translators: %s: montant remboursé. */
-				__( 'Remboursement enregistré depuis Virevo : %s.', 'virevo-for-woocommerce' ),
+				__( 'Remboursement enregistré depuis Virevo : %s. Le stock n\'a pas été remis en rayon.', 'virevo-for-woocommerce' ),
 				wc_price( $cents / 100 )
 			)
 		);
