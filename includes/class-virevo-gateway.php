@@ -224,6 +224,19 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 			return $resp; // WooCommerce affiche le message (ex. « indisponible en production »).
 		}
 
+		// On mémorise l'identifiant du remboursement pour couper la BOUCLE :
+		// Virevo va émettre `payment.refunded` sur ce remboursement, et le
+		// webhook doit reconnaître qu'il vient de nous, sinon il créerait une
+		// seconde ligne de remboursement et le total de la commande serait faux.
+		// Cf. `Virevo_Webhook::record_refund()`.
+		if ( ! empty( $resp['id'] ) ) {
+			$known = $order->get_meta( '_virevo_refund_ids' );
+			$known = is_array( $known ) ? $known : array();
+			$known[] = (string) $resp['id'];
+			$order->update_meta_data( '_virevo_refund_ids', $known );
+			$order->save();
+		}
+
 		$order->add_order_note(
 			sprintf(
 				/* translators: %s: montant remboursé. */

@@ -52,11 +52,32 @@ class Virevo_Webhook {
 			return new WP_REST_Response( array( 'error' => 'invalid payload' ), 400 );
 		}
 
-		if ( 'payment.succeeded' === ( $event['type'] ?? '' ) ) {
-			self::mark_order_paid( $event );
+		switch ( $event['type'] ?? '' ) {
+			case 'payment.succeeded':
+				self::mark_order_paid( $event );
+				break;
+
+			// Les TROIS façons dont un paiement se termine sans argent. Jusqu'au
+			// 2026-09-24, elles étaient acquittées puis jetées : la commande
+			// restait « en attente de paiement » indéfiniment, son stock réservé
+			// avec elle, et le marchand faisait le ménage à la main sans savoir
+			// lesquelles étaient mortes.
+			case 'payment.failed':
+			case 'payment.canceled':
+			case 'payment.expired':
+				self::close_unpaid_order( $event );
+				break;
+
+			// Remboursement décidé depuis le tableau de bord Virevo : il n'était
+			// pas répercuté dans la boutique, dont les totaux devenaient faux.
+			case 'payment.refunded':
+				self::record_refund( $event );
+				break;
 		}
 
-		// 2xx : on accuse réception (sinon Virevo réessaie).
+		// 2xx : on accuse réception (sinon Virevo réessaie). Un type inconnu est
+		// acquitté volontairement — un événement ajouté plus tard ne doit pas
+		// faire échouer la livraison chez les marchands qui n'ont pas mis à jour.
 		return new WP_REST_Response( array( 'received' => true ), 200 );
 	}
 
@@ -100,29 +121,148 @@ class Virevo_Webhook {
 	}
 
 	/**
-	 * Marque la commande payée. La référence Virevo = ID de commande WooCommerce.
-	 * On vérifie en plus l'identifiant de paiement mémorisé (défense).
+	 * Retrouve la commande d'un événement, ou null.
+	 *
+	 * La référence Virevo est l'ID de commande WooCommerce. On revérifie
+	 * l'identifiant de paiement mémorisé : une référence seule pourrait désigner
+	 * une commande étrangère à ce paiement.
 	 */
-	private static function mark_order_paid( array $event ) {
-		$payment = isset( $event['data']['payment'] ) ? $event['data']['payment'] : array();
+	private static function resolve_order( array $event ) {
+		$payment    = isset( $event['data']['payment'] ) ? $event['data']['payment'] : array();
 		$reference  = isset( $payment['reference'] ) ? $payment['reference'] : '';
 		$payment_id = isset( $payment['id'] ) ? $payment['id'] : '';
 
 		$order = wc_get_order( (int) $reference );
 		if ( ! $order ) {
-			return;
+			return null;
 		}
 
 		$stored = $order->get_meta( '_virevo_payment_id' );
 		if ( $stored && $payment_id && $stored !== $payment_id ) {
-			return; // incohérence : on ignore.
+			return null; // incohérence : on ignore.
+		}
+		return $order;
+	}
+
+	/** Marque la commande payée. */
+	private static function mark_order_paid( array $event ) {
+		$order = self::resolve_order( $event );
+		if ( ! $order ) {
+			return;
 		}
 
 		if ( $order->is_paid() ) {
 			return; // idempotent : déjà réglée.
 		}
 
+		$payment    = isset( $event['data']['payment'] ) ? $event['data']['payment'] : array();
+		$payment_id = isset( $payment['id'] ) ? $payment['id'] : '';
+
 		$order->payment_complete( $payment_id );
 		$order->add_order_note( __( 'Virement instantané reçu (Virevo).', 'virevo-for-woocommerce' ) );
+	}
+
+	/**
+	 * Clôt une commande dont le paiement ne viendra pas.
+	 *
+	 * Deux gardes valent plus que le reste de la méthode.
+	 *
+	 * 1. **Une commande payée n'est jamais touchée.** Un `payment.failed` peut
+	 *    arriver après un `payment.succeeded` — notification tardive, tentative
+	 *    précédente notifiée en retard. Annuler alors une commande réglée serait
+	 *    bien pire que de ne rien faire.
+	 * 2. **Un état terminal n'est pas réécrit.** Le marchand a pu annuler ou
+	 *    rembourser lui-même entre-temps ; sa décision prime sur un événement
+	 *    qui redit ce qu'on sait déjà.
+	 */
+	private static function close_unpaid_order( array $event ) {
+		$order = self::resolve_order( $event );
+		if ( ! $order ) {
+			return;
+		}
+		if ( $order->is_paid() ) {
+			return;
+		}
+		if ( $order->has_status( array( 'cancelled', 'failed', 'refunded' ) ) ) {
+			return;
+		}
+
+		$type = $event['type'] ?? '';
+		if ( 'payment.failed' === $type ) {
+			// « failed » est l'état WooCommerce d'un paiement REFUSÉ : la commande
+			// reste visible et le client peut réessayer de payer.
+			$order->update_status(
+				'failed',
+				__( 'Virement refusé (Virevo) : plafond dépassé, ou refus de la banque du client.', 'virevo-for-woocommerce' )
+			);
+			return;
+		}
+
+		$note = 'payment.expired' === $type
+			? __( 'Demande de paiement Virevo expirée : elle n\'est plus payable.', 'virevo-for-woocommerce' )
+			: __( 'Paiement Virevo annulé avant règlement.', 'virevo-for-woocommerce' );
+		// « cancelled » libère le stock que WooCommerce avait réservé.
+		$order->update_status( 'cancelled', $note );
+	}
+
+	/**
+	 * Répercute dans la boutique un remboursement décidé chez Virevo.
+	 *
+	 * ⚠️ Le piège est la BOUCLE. Un remboursement lancé depuis l'admin
+	 * WooCommerce appelle l'API Virevo, qui émet `payment.refunded`, qui revient
+	 * ici : sans garde, on créerait une SECONDE ligne de remboursement et le
+	 * total de la commande deviendrait faux.
+	 *
+	 * La passerelle mémorise donc l'identifiant de chaque remboursement qu'elle
+	 * a elle-même déclenché (`_virevo_refund_ids`), et on ignore ceux qu'on
+	 * connaît déjà. Ne passent que les remboursements décidés ailleurs.
+	 */
+	private static function record_refund( array $event ) {
+		$order = self::resolve_order( $event );
+		if ( ! $order ) {
+			return;
+		}
+
+		$refund    = isset( $event['data']['refund'] ) ? $event['data']['refund'] : array();
+		$refund_id = isset( $refund['id'] ) ? (string) $refund['id'] : '';
+		$cents     = isset( $refund['amount_cents'] ) ? (int) $refund['amount_cents'] : 0;
+		if ( '' === $refund_id || $cents <= 0 ) {
+			return; // Sans identifiant, impossible de garantir l'idempotence.
+		}
+
+		$known = $order->get_meta( '_virevo_refund_ids' );
+		$known = is_array( $known ) ? $known : array();
+		if ( in_array( $refund_id, $known, true ) ) {
+			return; // Déjà reflété : c'est nous qui l'avons déclenché.
+		}
+
+		$created = wc_create_refund(
+			array(
+				'order_id' => $order->get_id(),
+				'amount'   => $cents / 100,
+				'reason'   => __( 'Remboursement effectué depuis Virevo.', 'virevo-for-woocommerce' ),
+			)
+		);
+		if ( is_wp_error( $created ) ) {
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: message d'erreur. */
+					__( 'Remboursement Virevo reçu mais non enregistré : %s', 'virevo-for-woocommerce' ),
+					$created->get_error_message()
+				)
+			);
+			return;
+		}
+
+		$known[] = $refund_id;
+		$order->update_meta_data( '_virevo_refund_ids', $known );
+		$order->save();
+		$order->add_order_note(
+			sprintf(
+				/* translators: %s: montant remboursé. */
+				__( 'Remboursement enregistré depuis Virevo : %s.', 'virevo-for-woocommerce' ),
+				wc_price( $cents / 100 )
+			)
+		);
 	}
 }
