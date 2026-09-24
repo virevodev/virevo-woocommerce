@@ -29,14 +29,20 @@ signé**.
    webhook → signature vérifiée → `payment_complete()`.
 
 ## Référence API
-- Guide : https://virevo.fr/developpeurs.html
+- Guide : https://virevo.fr/developpeurs
 - OpenAPI : https://app.virevo.fr/docs
 
 ## Notes / à venir
 - En mode test, déclencher `POST /v1/payments/{id}/simulate` pour passer le
   paiement à `succeeded` et tester le webhook.
-- Retour automatique du client après paiement (`return_url`) : à ajouter quand
-  l'API l'exposera ; aujourd'hui la commande est validée par le webhook.
+- Le retour du client après paiement est en place : `return_url` et
+  `cancel_url` sont transmis à `POST /v1/payments`. La validation de la commande
+  reste portée par le webhook, le retour navigateur n'étant jamais une preuve
+  de paiement.
+- **Limite connue** : seul `payment.succeeded` est traité. `payment.failed`,
+  `payment.canceled` et `payment.refunded` sont acquittés puis ignorés, donc une
+  commande dont le paiement échoue reste « en attente » avec son stock réservé.
+  À corriger.
 
 ## Distribution & mises à jour (pilotes)
 

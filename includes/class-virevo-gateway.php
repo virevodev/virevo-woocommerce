@@ -86,6 +86,71 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 			: $this->get_option( 'test_api_key' );
 	}
 
+	/** Préfixe attendu de la clé, selon le mode actif. */
+	private function expected_key_prefix() {
+		return 'live' === $this->get_option( 'mode' ) ? 'vrv_live_' : 'vrv_test_';
+	}
+
+	/**
+	 * N'affiche le moyen de paiement que s'il peut réellement aboutir.
+	 *
+	 * Sans cette garde, une boutique qui active Virevo mais oublie la clé
+	 * propose « Virement instantané » au client, qui le choisit et se prend une
+	 * erreur d'API en pleine commande. Le paiement le plus coûteux est celui
+	 * qu'on laisse commencer alors qu'il ne peut pas finir.
+	 *
+	 * L'euro est contrôlé ici aussi, et plus seulement dans `process_payment` :
+	 * mieux vaut masquer le moyen de paiement que le refuser après le clic.
+	 */
+	public function is_available() {
+		if ( ! parent::is_available() ) {
+			return false;
+		}
+		if ( 'EUR' !== get_woocommerce_currency() ) {
+			return false;
+		}
+		$key = trim( (string) $this->get_api_key() );
+		if ( '' === $key ) {
+			return false;
+		}
+		// Clé du mauvais mode : elle échouerait de toute façon côté API.
+		return 0 === strpos( $key, $this->expected_key_prefix() );
+	}
+
+	/**
+	 * Refuse une clé dont le préfixe contredit le mode choisi.
+	 *
+	 * `vrv_test_` enregistrée en mode Live, c'est une faute de frappe, jamais une
+	 * intention : l'API rejetterait la requête, et le marchand ne le découvrirait
+	 * qu'au premier vrai paiement. Autant le dire au moment de la saisie.
+	 *
+	 * WooCommerce agrège les erreurs des `validate_*_field()` et les affiche sans
+	 * enregistrer la valeur fautive.
+	 */
+	public function validate_test_api_key_field( $key, $value ) {
+		return $this->validate_api_key_field( $value, 'vrv_test_', __( 'test', 'virevo-for-woocommerce' ) );
+	}
+
+	public function validate_live_api_key_field( $key, $value ) {
+		return $this->validate_api_key_field( $value, 'vrv_live_', __( 'live', 'virevo-for-woocommerce' ) );
+	}
+
+	private function validate_api_key_field( $value, $prefix, $label ) {
+		$value = trim( (string) $value );
+		if ( '' === $value || 0 === strpos( $value, $prefix ) ) {
+			return $value;
+		}
+		WC_Admin_Settings::add_error(
+			sprintf(
+				/* translators: 1: mode (test/live), 2: préfixe attendu, ex. vrv_test_ */
+				__( 'La clé API %1$s doit commencer par « %2$s ». Vérifiez que vous avez copié la clé du bon mode depuis Virevo → Développeurs.', 'virevo-for-woocommerce' ),
+				$label,
+				$prefix
+			)
+		);
+		return ''; // On n'enregistre pas une clé qui ne peut pas fonctionner.
+	}
+
 	/**
 	 * Traite le paiement : crée une demande Virevo et redirige vers payment_url.
 	 *

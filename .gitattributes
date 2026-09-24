@@ -5,6 +5,7 @@
 /.gitattributes export-ignore
 /dist           export-ignore
 /README.md      export-ignore
+/SUBMISSION-WORDPRESS-ORG.md export-ignore
 
 # Normalise les fins de ligne (évite les soucis CRLF côté Windows).
 * text=auto eol=lf
