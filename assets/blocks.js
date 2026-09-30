@@ -15,7 +15,17 @@
 		name: 'virevo',
 		label: label,
 		ariaLabel: label,
-		canMakePayment: () => true,
+		// Sous le minimum, l'API refuserait le paiement : on masque le moyen de
+		// paiement. total_price est en unités mineures (centimes pour l'euro).
+		canMakePayment: ( { cartTotals } ) => {
+			const min = settings.minAmountCents || 0;
+			if ( ! cartTotals || ! min ) {
+				return true;
+			}
+			const unit = cartTotals.currency_minor_unit;
+			const cents = parseInt( cartTotals.total_price, 10 ) * Math.pow( 10, 2 - ( unit === undefined ? 2 : unit ) );
+			return cents >= min;
+		},
 		content: createElement( Content, null ),
 		edit: createElement( Content, null ),
 		supports: {

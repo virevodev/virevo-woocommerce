@@ -11,6 +11,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class WC_Gateway_Virevo extends WC_Payment_Gateway {
 
+	/**
+	 * Montant minimal d'un paiement Virevo, en centimes TTC.
+	 *
+	 * L'API refuse tout encaissement plus petit (`AMOUNT_BELOW_MINIMUM`). Même
+	 * valeur que `MIN_PAYMENT_CENTS` côté Virevo : à modifier ensemble.
+	 */
+	const MIN_AMOUNT_CENTS = 10000;
+
 	public function __construct() {
 		$this->id                 = 'virevo';
 		$this->method_title       = __( 'Virevo — virement instantané', 'virevo-for-woocommerce' );
@@ -101,12 +109,27 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 	 *
 	 * L'euro est contrôlé ici aussi, et plus seulement dans `process_payment` :
 	 * mieux vaut masquer le moyen de paiement que le refuser après le clic.
+	 * Même logique pour le montant minimal : sous 100 €, l'API refuserait.
 	 */
+	/**
+	 * Vrai si le montant (en euros) est sous le minimum accepté par Virevo.
+	 *
+	 * @param float|string $total Montant TTC en euros.
+	 * @return bool
+	 */
+	private function below_minimum( $total ) {
+		return (int) round( (float) $total * 100 ) < self::MIN_AMOUNT_CENTS;
+	}
+
 	public function is_available() {
 		if ( ! parent::is_available() ) {
 			return false;
 		}
 		if ( 'EUR' !== get_woocommerce_currency() ) {
+			return false;
+		}
+		// get_order_total() couvre le panier comme la page « payer la commande ».
+		if ( $this->below_minimum( $this->get_order_total() ) ) {
 			return false;
 		}
 		$key = trim( (string) $this->get_api_key() );
@@ -162,6 +185,11 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 
 		if ( 'EUR' !== get_woocommerce_currency() ) {
 			wc_add_notice( __( 'Virevo ne prend en charge que les paiements en euros.', 'virevo-for-woocommerce' ), 'error' );
+			return array( 'result' => 'failure' );
+		}
+
+		if ( $this->below_minimum( $order->get_total() ) ) {
+			wc_add_notice( __( 'Le paiement par virement instantané Virevo est disponible à partir de 100 €.', 'virevo-for-woocommerce' ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 
