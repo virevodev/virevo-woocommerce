@@ -57,6 +57,9 @@ final class Virevo_Blocks extends AbstractPaymentMethodType {
 			'title'       => isset( $this->settings['title'] ) ? $this->settings['title'] : 'Virement instantané',
 			'description' => isset( $this->settings['description'] ) ? $this->settings['description'] : '',
 			'supports'    => array( 'products' ),
+			// Le checkout par blocs recalcule le panier sans recharger la page :
+			// le minimum doit donc aussi être vérifié côté navigateur.
+			'minAmountCents' => WC_Gateway_Virevo::MIN_AMOUNT_CENTS,
 		);
 	}
 }

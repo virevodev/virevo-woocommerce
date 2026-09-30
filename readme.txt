@@ -4,7 +4,7 @@ Tags: woocommerce, payment gateway, instant payment, sepa, open banking
 Requires at least: 6.0
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 0.7.0
+Stable tag: 0.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -97,6 +97,9 @@ paiement refusé passe la commande en « échoué », ce qui laisse le client
 réessayer ; une demande annulée ou expirée la passe en « annulé ».
 
 == Changelog ==
+
+= 0.8.0 =
+* Virevo n'est plus proposé pour une commande de moins de 100 € TTC, montant minimal d'un paiement Virevo. Le moyen de paiement est masqué dans le checkout classique comme dans le checkout par blocs, au lieu d'échouer après le clic.
 
 = 0.7.0 =
 * Les quatre événements de webhook sont traités, et non plus seulement le succès. Un paiement échoué, annulé ou expiré clôt la commande au lieu de la laisser en attente indéfiniment, stock réservé.
