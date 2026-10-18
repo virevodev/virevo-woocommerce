@@ -123,23 +123,24 @@ class Virevo_Webhook {
 	/**
 	 * Retrouve la commande d'un événement, ou null.
 	 *
-	 * La référence Virevo est l'ID de commande WooCommerce. On revérifie
-	 * l'identifiant de paiement mémorisé : une référence seule pourrait désigner
-	 * une commande étrangère à ce paiement.
+	 * La référence Virevo est l'ID de commande WooCommerce. On exige en plus
+	 * l'identifiant de paiement mémorisé par `process_payment()` : une
+	 * référence seule pourrait désigner une commande réglée autrement (carte,
+	 * chèque), qu'aucun événement Virevo ne doit pouvoir toucher.
 	 */
 	private static function resolve_order( array $event ) {
 		$payment    = isset( $event['data']['payment'] ) ? $event['data']['payment'] : array();
 		$reference  = isset( $payment['reference'] ) ? $payment['reference'] : '';
-		$payment_id = isset( $payment['id'] ) ? $payment['id'] : '';
+		$payment_id = isset( $payment['id'] ) ? (string) $payment['id'] : '';
 
-		$order = wc_get_order( (int) $reference );
+		$order = wc_get_order( absint( $reference ) );
 		if ( ! $order ) {
 			return null;
 		}
 
-		$stored = $order->get_meta( '_virevo_payment_id' );
-		if ( $stored && $payment_id && $stored !== $payment_id ) {
-			return null; // incohérence : on ignore.
+		$stored = (string) $order->get_meta( '_virevo_payment_id' );
+		if ( '' === $stored || '' === $payment_id || ! hash_equals( $stored, $payment_id ) ) {
+			return null; // Commande étrangère à ce paiement : on ignore.
 		}
 		return $order;
 	}

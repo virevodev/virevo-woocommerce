@@ -69,7 +69,7 @@ class Virevo_API {
 			return new WP_Error( 'virevo_api_error', self::error_message( $code, $body ) );
 		}
 
-		return is_array( $body ) ? $body : new WP_Error( 'virevo_api_error', 'Réponse Virevo illisible.' );
+		return is_array( $body ) ? $body : new WP_Error( 'virevo_api_error', __( 'Réponse Virevo illisible.', 'virevo-for-woocommerce' ) );
 	}
 
 	/**
@@ -110,7 +110,7 @@ class Virevo_API {
 		if ( $code < 200 || $code >= 300 ) {
 			return new WP_Error( 'virevo_refund_error', self::error_message( $code, $decoded ) );
 		}
-		return is_array( $decoded ) ? $decoded : new WP_Error( 'virevo_refund_error', 'Réponse Virevo illisible.' );
+		return is_array( $decoded ) ? $decoded : new WP_Error( 'virevo_refund_error', __( 'Réponse Virevo illisible.', 'virevo-for-woocommerce' ) );
 	}
 
 	/** Extrait le message d'erreur de l'API ({"error":{"message":…}}). */
@@ -121,6 +121,10 @@ class Virevo_API {
 		if ( is_array( $body ) && ! empty( $body['message'] ) ) {
 			return $body['message'];
 		}
-		return sprintf( 'Erreur API Virevo (HTTP %d).', $code );
+		return sprintf(
+			/* translators: %d: code HTTP. */
+			__( 'Erreur API Virevo (HTTP %d).', 'virevo-for-woocommerce' ),
+			$code
+		);
 	}
 }
