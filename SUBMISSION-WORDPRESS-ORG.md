@@ -4,6 +4,19 @@
 > plugin » : une extension refusée repart en fin de file d'attente, et la file se
 > compte en semaines.
 
+## État au 2026-10-18 (v0.8.1)
+
+| Point | État |
+|---|---|
+| Paiements réels en production (§0) | ✅ depuis le 2026-09-29 |
+| Quatre événements du webhook (§3.4) | ✅ v0.7.0 |
+| `readme.txt` **en anglais** | ✅ v0.8.1. Exigé par l'équipe de revue depuis juillet 2025 (make.wordpress.org/plugins/2025/07/28). L'interface reste en français. |
+| Préfixe unique | ✅ `WC_Gateway_Virevo` → `Virevo_Gateway` (le préfixe `WC_` est celui de WooCommerce) |
+| Testé sur WordPress à jour (§3.3) | ✅ WordPress 7.1.3, PHP 8.3, WooCommerce à jour : activation, réglages, masquage sous 100 €, 7 cas de webhook signés, aucun avertissement dans `debug.log` |
+| Plugin Check (outil officiel) | ✅ « No errors found » sur le paquet `--wporg` |
+| Compte WordPress.org `virevo` (§3.2) | ❌ à créer par Thomas |
+| Visuels : icône, bannières, captures (§3.5) | ❌ à produire |
+
 ---
 
 ## 0. Le bloquant qui commande tout
