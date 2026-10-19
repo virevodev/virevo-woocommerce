@@ -27,7 +27,7 @@ final class Virevo_Blocks extends AbstractPaymentMethodType {
 	 * zone euro. Or les blocs sont le checkout par défaut des boutiques
 	 * récentes : c'est le chemin le PLUS emprunté qui était le moins gardé.
 	 *
-	 * `WC_Gateway_Virevo::is_available()` reste donc la seule règle, et les deux
+	 * `Virevo_Gateway::is_available()` reste donc la seule règle, et les deux
 	 * tunnels ne peuvent plus diverger.
 	 */
 	public function is_active() {
@@ -59,7 +59,7 @@ final class Virevo_Blocks extends AbstractPaymentMethodType {
 			'supports'    => array( 'products' ),
 			// Le checkout par blocs recalcule le panier sans recharger la page :
 			// le minimum doit donc aussi être vérifié côté navigateur.
-			'minAmountCents' => WC_Gateway_Virevo::MIN_AMOUNT_CENTS,
+			'minAmountCents' => Virevo_Gateway::MIN_AMOUNT_CENTS,
 		);
 	}
 }

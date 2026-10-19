@@ -3,7 +3,7 @@
  * Plugin Name: Virevo for WooCommerce
  * Plugin URI: https://virevo.fr/developpeurs
  * Description: Encaissez par virement instantané (Virevo) dans WooCommerce — sans frais de carte. Lien de paiement + confirmation par webhook signé.
- * Version: 0.8.0
+ * Version: 0.8.1
  * Author: Virevo
  * Author URI: https://virevo.fr
  * License: GPLv2 or later
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Accès direct interdit.
 }
 
-define( 'VIREVO_WC_VERSION', '0.8.0' );
+define( 'VIREVO_WC_VERSION', '0.8.1' );
 define( 'VIREVO_WC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'VIREVO_WC_FILE', __FILE__ );
 
@@ -55,7 +55,7 @@ add_action(
 		add_filter(
 			'woocommerce_payment_gateways',
 			function ( $gateways ) {
-				$gateways[] = 'WC_Gateway_Virevo';
+				$gateways[] = 'Virevo_Gateway';
 				return $gateways;
 			}
 		);

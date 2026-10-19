@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-class WC_Gateway_Virevo extends WC_Payment_Gateway {
+class Virevo_Gateway extends WC_Payment_Gateway {
 
 	/**
 	 * Montant minimal d'un paiement Virevo, en centimes TTC.
@@ -79,8 +79,8 @@ class WC_Gateway_Virevo extends WC_Payment_Gateway {
 			'webhook_secret' => array(
 				'title'       => __( 'Secret de webhook', 'virevo-for-woocommerce' ),
 				'type'        => 'password',
-				/* translators: %s: URL du webhook à coller dans Virevo. */
 				'description' => sprintf(
+					/* translators: %s: URL du webhook à coller dans Virevo. */
 					__( 'Secret « whsec_… » généré dans Virevo → Développeurs. URL de webhook à y enregistrer : %s', 'virevo-for-woocommerce' ),
 					'<code>' . esc_html( rest_url( 'virevo/v1/webhook' ) ) . '</code>'
 				),
