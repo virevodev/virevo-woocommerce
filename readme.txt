@@ -4,7 +4,7 @@ Tags: payment gateway, instant payment, sepa, open banking, bank transfer
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 0.8.1
+Stable tag: 0.8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -95,8 +95,8 @@ customer without a bank account in the SEPA area cannot pay this way.
 
 = Is there a minimum amount? =
 
-Yes, 100 € including tax. Below that amount, the payment method is hidden at
-checkout.
+Yes, 1 € including tax (Virevo removed its former 100 € minimum on
+October 19, 2026). Below that amount, the payment method is hidden at checkout.
 
 = Why does "Virement instantané" not show at checkout? =
 
@@ -112,6 +112,9 @@ declined payment moves the order to "Failed", so the customer can try again;
 a cancelled or expired request moves it to "Cancelled".
 
 == Changelog ==
+
+= 0.8.2 =
+* The minimum order total is now 1 € including tax, following the removal of the 100 € minimum on the Virevo side.
 
 = 0.8.1 =
 * Webhook events are only applied to orders paid with Virevo: the stored payment identifier is now required, not just compared.

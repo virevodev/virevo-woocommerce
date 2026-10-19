@@ -17,7 +17,7 @@ class Virevo_Gateway extends WC_Payment_Gateway {
 	 * L'API refuse tout encaissement plus petit (`AMOUNT_BELOW_MINIMUM`). Même
 	 * valeur que `MIN_PAYMENT_CENTS` côté Virevo : à modifier ensemble.
 	 */
-	const MIN_AMOUNT_CENTS = 10000;
+	const MIN_AMOUNT_CENTS = 100;
 
 	public function __construct() {
 		$this->id                 = 'virevo';
@@ -109,7 +109,7 @@ class Virevo_Gateway extends WC_Payment_Gateway {
 	 *
 	 * L'euro est contrôlé ici aussi, et plus seulement dans `process_payment` :
 	 * mieux vaut masquer le moyen de paiement que le refuser après le clic.
-	 * Même logique pour le montant minimal : sous 100 €, l'API refuserait.
+	 * Même logique pour le montant minimal : sous 1 €, l'API refuserait.
 	 */
 	/**
 	 * Vrai si le montant (en euros) est sous le minimum accepté par Virevo.
@@ -189,7 +189,7 @@ class Virevo_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( $this->below_minimum( $order->get_total() ) ) {
-			wc_add_notice( __( 'Le paiement par virement instantané Virevo est disponible à partir de 100 €.', 'virevo-for-woocommerce' ), 'error' );
+			wc_add_notice( __( 'Le paiement par virement instantané Virevo est disponible à partir de 1 €.', 'virevo-for-woocommerce' ), 'error' );
 			return array( 'result' => 'failure' );
 		}
 
