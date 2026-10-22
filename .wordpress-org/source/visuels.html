@@ -1,0 +1,122 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!--
+  Visuels de la fiche WordPress.org (icône et bannières), rendus en PNG par
+  .wordpress-org/source/rendre.mjs. Paramètres d'URL :
+    ?v=icon            → icône carrée (256 px de côté)
+    ?v=banner&lang=fr  → bannière 772 × 250 (rendue en ×1 et ×2)
+  Aucun logo WordPress ni WooCommerce : la directive du dépôt l'interdit.
+-->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Archivo", "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+
+  /* ---------- Icône ---------- */
+  .icon {
+    width: 256px; height: 256px; display: grid; place-items: center;
+    background: linear-gradient(135deg, #2DD4BF 0%, #0D9488 100%);
+  }
+
+  /* ---------- Bannière ---------- */
+  .banner {
+    width: 772px; height: 250px; position: relative; overflow: hidden;
+    background:
+      radial-gradient(420px 260px at 92% 0%, rgba(45,212,191,.22), transparent 62%),
+      radial-gradient(380px 240px at 10% 110%, rgba(13,148,136,.26), transparent 60%),
+      linear-gradient(115deg, #0A1C27 0%, #0C2230 46%, #0E3038 100%);
+  }
+  .waves { position: absolute; inset: 0; opacity: .10; }
+  .rule {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 4px;
+    background: linear-gradient(90deg, #2DD4BF 0%, #0D9488 55%, #0C2230 100%);
+  }
+  .brand { position: absolute; left: 40px; top: 30px; display: flex; align-items: center; gap: 9px; }
+  .brand .mark {
+    width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
+    background: linear-gradient(135deg, #2DD4BF, #0D9488);
+  }
+  .brand .name { font-size: 20px; font-weight: 800; color: #F1F7F6; letter-spacing: -.02em; }
+  .brand .name span { color: #2DD4BF; }
+  .copy { position: absolute; left: 40px; top: 84px; width: 400px; }
+  h1 { font-size: 30px; font-weight: 800; line-height: 1.08; letter-spacing: -.025em; color: #F1F7F6; }
+  h1 em { font-style: normal; color: #2DD4BF; }
+  .sub { margin-top: 12px; font-size: 14px; font-weight: 500; line-height: 1.4; color: #9FBDBB; }
+
+  /* Carte de paiement stylisée, à droite. */
+  .card {
+    position: absolute; right: 40px; top: 38px; width: 248px;
+    background: #F8FBFB; border-radius: 14px; padding: 18px 18px 16px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.35);
+  }
+  .card .label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #5B7C80; }
+  .card .amount { margin-top: 4px; font-size: 30px; font-weight: 800; color: #0C2230; letter-spacing: -.02em; }
+  .card .btn {
+    margin-top: 12px; height: 38px; border-radius: 9px; background: #0D9488; color: #fff;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    font-size: 13px; font-weight: 700;
+  }
+  .card .ok {
+    margin-top: 10px; display: flex; align-items: center; gap: 7px;
+    font-size: 12px; font-weight: 600; color: #047857;
+  }
+  .card .ok i {
+    width: 18px; height: 18px; border-radius: 50%; background: #D1FAE5;
+    display: grid; place-items: center; font-style: normal;
+  }
+</style>
+</head>
+<body>
+<script>
+  const p = new URLSearchParams(location.search);
+  const fr = p.get("lang") === "fr";
+  const t = fr
+    ? {
+        h1: "Le virement instantané<br><em>sans frais de carte</em>",
+        sub: "Vos clients paient par virement SEPA instantané depuis leur banque. L'argent arrive directement sur votre IBAN.",
+        label: "Commande n° 1042", amount: "84,00 €",
+        btn: "Payer par virement instantané", ok: "Paiement reçu",
+      }
+    : {
+        h1: "Instant bank transfers<br><em>with no card fees</em>",
+        sub: "Customers pay by SEPA Instant Credit Transfer from their own bank. The money lands directly on your IBAN.",
+        label: "Order #1042", amount: "€84.00",
+        btn: "Pay by instant transfer", ok: "Payment received",
+      };
+
+  const waves = (w, color) =>
+    `<path d="M3 9c3 0 3-3 6-3s3 3 6 3 3-3 6-3M3 15c3 0 3 3 6 3s3-3 6-3 3 3 6 3"
+           stroke="${color}" stroke-width="${w}" stroke-linecap="round" fill="none"/>`;
+
+  if (p.get("v") === "icon") {
+    document.body.innerHTML =
+      `<div class="icon"><svg width="168" height="168" viewBox="0 0 24 24">${waves(2.2, "#fff")}</svg></div>`;
+  } else {
+    document.body.innerHTML = `
+      <div class="banner">
+        <svg class="waves" viewBox="0 0 772 250" preserveAspectRatio="none" aria-hidden="true">
+          <g stroke="#2DD4BF" stroke-width="1.6" fill="none" stroke-linecap="round">
+            <path d="M-20 70 C 60 40, 120 100, 200 70 S 340 40, 420 70 S 560 100, 640 70 S 780 40, 820 70"/>
+            <path d="M-20 130 C 60 100, 120 160, 200 130 S 340 100, 420 130 S 560 160, 640 130 S 780 100, 820 130"/>
+            <path d="M-20 190 C 60 160, 120 220, 200 190 S 340 160, 420 190 S 560 220, 640 190 S 780 160, 820 190"/>
+          </g>
+        </svg>
+        <div class="brand">
+          <span class="mark"><svg width="19" height="19" viewBox="0 0 24 24">${waves(2.1, "#fff")}</svg></span>
+          <span class="name">Vire<span>vo</span></span>
+        </div>
+        <div class="copy"><h1>${t.h1}</h1><div class="sub">${t.sub}</div></div>
+        <div class="card">
+          <div class="label">${t.label}</div>
+          <div class="amount">${t.amount}</div>
+          <div class="btn"><svg width="15" height="15" viewBox="0 0 24 24">${waves(2.4, "#fff")}</svg>${t.btn}</div>
+          <div class="ok"><i>✓</i>${t.ok}</div>
+        </div>
+        <div class="rule"></div>
+      </div>`;
+  }
+</script>
+</body>
+</html>
