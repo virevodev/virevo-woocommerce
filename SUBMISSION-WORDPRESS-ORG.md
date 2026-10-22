@@ -15,7 +15,7 @@
 | Testé sur WordPress à jour (§3.3) | ✅ WordPress 7.1.3, PHP 8.3, WooCommerce à jour : activation, réglages, masquage sous 100 €, 7 cas de webhook signés, aucun avertissement dans `debug.log` |
 | Plugin Check (outil officiel) | ✅ « No errors found » sur le paquet `--wporg` |
 | Compte WordPress.org `virevo` (§3.2) | ❌ à créer par Thomas |
-| Visuels : icône, bannières, captures (§3.5) | ❌ à produire |
+| Visuels : icône, bannières, captures (§3.5) | ✅ 2026-10-22, dans `.wordpress-org/` (à copier dans `assets/` du SVN après acceptation). Bannières en anglais + variante `-fr_FR` servie aux visiteurs francophones. Sources : `.wordpress-org/source/`. |
 
 ---
 

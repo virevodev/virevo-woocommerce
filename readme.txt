@@ -111,6 +111,12 @@ The order is closed automatically and the reserved stock is released. A
 declined payment moves the order to "Failed", so the customer can try again;
 a cancelled or expired request moves it to "Cancelled".
 
+== Screenshots ==
+
+1. The "Virement instantané" (instant bank transfer) payment method at checkout.
+2. A paid order: the signed webhook has confirmed the transfer and the order moved to "Processing".
+3. Plugin settings: test and live API keys, webhook secret and the webhook URL to register in Virevo.
+
 == Changelog ==
 
 = 0.8.2 =
